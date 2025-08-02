@@ -1,10 +1,12 @@
 "use client";
-import { useState } from "react"
+import { useActionState, useState } from "react"
 import Link from "next/link"
 import Head from "next/head";
+import { registerUser } from "@/actions/userActions";
 
 export default function RegisterPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [state, formAction, isPending] = useActionState(registerUser);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -24,7 +26,7 @@ export default function RegisterPage() {
                     Join Notezy
                   </h1>
 
-                  <form className="space-y-4 lg:space-y-6">
+                  <form action={formAction} className="space-y-4 lg:space-y-6">
                     {/* Username and Full Name - Two Columns */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
@@ -33,6 +35,7 @@ export default function RegisterPage() {
                           type="text"
                           placeholder="Enter username"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                          name="username"
                         />
                       </div>
                       <div>
@@ -41,6 +44,7 @@ export default function RegisterPage() {
                           type="text"
                           placeholder="Enter full name"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                          name="fullname"
                         />
                       </div>
                     </div>
@@ -52,6 +56,7 @@ export default function RegisterPage() {
                         type="email"
                         placeholder="Enter your email"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                        name="email"
                       />
                     </div>
 
@@ -63,6 +68,7 @@ export default function RegisterPage() {
                           type="password"
                           placeholder="Create password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                          name="password"
                         />
                       </div>
                       <div>
@@ -71,6 +77,7 @@ export default function RegisterPage() {
                           type="password"
                           placeholder="Confirm password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
+                          name="confirmPassword"
                         />
                       </div>
                     </div>
@@ -145,7 +152,7 @@ export default function RegisterPage() {
                       powerful, and always available when I need it."
                     </p>
                     <p className="text-xs text-gray-600 mt-2 text-center lg:text-left">
-                      — Sarah Johnson, Product Manager
+                      — Vijay Kumar, Product Owner
                     </p>
                   </div>
                 </div>
