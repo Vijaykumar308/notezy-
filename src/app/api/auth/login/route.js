@@ -13,21 +13,21 @@ export async function POST(req) {
   await connectDB();
   
   try {
-    const { identifier, password, rememberMe = false } = await req.json();
+    const { username, password, rememberMe = false } = await req.json();
 
     // Input validation
-    if (!identifier || !password) {
+    if (!username || !password) {
       return NextResponse.json(
         {
           success: false,
-          message: "Email/username and password are required",
+          message: "username and password are required",
         },
         { status: 400 }
       );
     }
 
     // Trim and normalize input
-    const normalizedIdentifier = identifier.trim().toLowerCase();
+    const normalizedIdentifier = username.trim().toLowerCase();
 
     // Find user by email or username
     const user = await User.findByEmailOrUsername(normalizedIdentifier);
