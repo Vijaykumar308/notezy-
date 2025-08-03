@@ -36,6 +36,8 @@ export default function RegisterPage() {
                           placeholder="Enter username"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="username"
+                          value="vijay123"
+                          readOnly
                         />
                       </div>
                       <div>
@@ -45,6 +47,8 @@ export default function RegisterPage() {
                           placeholder="Enter full name"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="fullname"
+                          value='vijay kumar 123'
+                          readOnly
                         />
                       </div>
                     </div>
@@ -57,6 +61,8 @@ export default function RegisterPage() {
                         placeholder="Enter your email"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                         name="email"
+                        value="vijay@123.com"
+                        readOnly
                       />
                     </div>
 
@@ -69,6 +75,8 @@ export default function RegisterPage() {
                           placeholder="Create password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="password"
+                          value="1234321"
+                          readOnly
                         />
                       </div>
                       <div>
@@ -78,6 +86,8 @@ export default function RegisterPage() {
                           placeholder="Confirm password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="confirmPassword"
+                           value="1234321"
+                           readOnly
                         />
                       </div>
                     </div>
