@@ -20,7 +20,7 @@ export default function Header() {
             {/* Logo */}
             <div className="flex items-center space-x-2">
               {/* <Leaf className="h-6 w-6 text-green-600" /> */}
-              <Image src={logo} width={50} height={50} alt="logo" />
+              <Image src={logo} height={50} width='auto' alt="logo" />
               <span className="text-xl font-semibold text-gray-900">Notezy</span>
             </div>
 

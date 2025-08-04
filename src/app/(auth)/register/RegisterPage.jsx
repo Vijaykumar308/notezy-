@@ -1,12 +1,22 @@
 "use client";
-import { useActionState, useState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import Link from "next/link"
-import Head from "next/head";
 import { registerUser } from "@/actions/userActions";
+import { toast } from 'react-toastify';
 
 export default function RegisterPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [state, formAction, isPending] = useActionState(registerUser);
+
+  useEffect(() => {
+  if (state?.message) {
+    if (state.success) {
+      toast.success(state.message);
+    } else {
+      toast.error(state.message);
+    }
+  }
+}, [state]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -36,8 +46,6 @@ export default function RegisterPage() {
                           placeholder="Enter username"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="username"
-                          value="vijay123"
-                          readOnly
                         />
                       </div>
                       <div>
@@ -47,8 +55,6 @@ export default function RegisterPage() {
                           placeholder="Enter full name"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="fullname"
-                          value='vijay kumar 123'
-                          readOnly
                         />
                       </div>
                     </div>
@@ -61,8 +67,6 @@ export default function RegisterPage() {
                         placeholder="Enter your email"
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                         name="email"
-                        value="vijay@123.com"
-                        readOnly
                       />
                     </div>
 
@@ -75,10 +79,9 @@ export default function RegisterPage() {
                           placeholder="Create password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="password"
-                          value="1234321"
-                          readOnly
                         />
                       </div>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
                         <input
@@ -86,10 +89,9 @@ export default function RegisterPage() {
                           placeholder="Confirm password"
                           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base"
                           name="confirmPassword"
-                           value="1234321"
-                           readOnly
                         />
                       </div>
+                      <p>{state?.errors.map((message) => <li>{message}</li>)}</p>
                     </div>
 
                     <button
