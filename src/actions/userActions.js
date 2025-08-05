@@ -125,8 +125,7 @@ export const LoginUser = async (prevData, formData) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(userData),
-                cache: 'no-store'
+                body: JSON.stringify(userData)
             });
 
             // Handle different response scenarios

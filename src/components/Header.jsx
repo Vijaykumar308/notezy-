@@ -9,6 +9,8 @@ import { useState } from "react";
 export default function Header() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+    const [isLoggedIn, setIsLoggedIn] = useState(true);
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
   }
@@ -36,10 +38,14 @@ export default function Header() {
                 <a href="#" className="text-gray-700 hover:text-gray-900 font-medium">
                   About
                 </a>
-                <Link href="/register" className="text-gray-700 hover:text-gray-900 font-medium">
-                  Sign Up
-                </Link>
+               {!isLoggedIn && (
+                <>
+                  <Link href="/login" className="block text-md text-gray-700 hover:text-gray-900"> Login </Link>
+                  <Link href="/register" className="block text-md font-medium text-gray-700 hover:text-gray-900"> Sign Up  </Link>
+                </>
+              )}
               </nav>
+
               <div className="flex items-center space-x-3">
                 <HelpCircle className="h-5 w-5 text-gray-500" />
                 <div className="h-8 w-8 rounded-full bg-orange-200 flex items-center justify-center">
@@ -102,18 +108,16 @@ export default function Header() {
             </div>
 
             <nav className="space-y-6">
-              <a href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900">
-                Home
-              </a>
-              <a href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900">
-                Explore
-              </a>
-              <a href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900">
-                About
-              </a>
-              <a href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900">
-                Sign Up
-              </a>
+              <a href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900"> Home </a>
+              <a href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900"> Explore </a>
+              <a href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900"> About </a>
+
+              {!isLoggedIn && (
+                <>
+                  <Link href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900"> Login </Link>
+                  <Link href="#" className="block text-lg font-medium text-gray-700 hover:text-gray-900"> Sign Up  </Link>
+                </>
+              )}
             </nav>
           </div>
         </div>
