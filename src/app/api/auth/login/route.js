@@ -147,7 +147,7 @@ export async function POST(req) {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production", // HTTPS only in production
-      sameSite: "strict",
+      // sameSite: "strict",
       path: "/",
     };
 
@@ -179,7 +179,7 @@ export async function POST(req) {
       isLoggedIn: true,
     }), {
       httpOnly: false, // Accessible to client-side JavaScript
-      secure: process.env.NODE_ENV === "production",
+      secure: true, // process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
       expires: accessTokenExpiry,
