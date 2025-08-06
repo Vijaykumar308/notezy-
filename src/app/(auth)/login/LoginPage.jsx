@@ -3,21 +3,28 @@ import { LoginUser } from "@/actions/userActions";
 import { redirect } from "next/navigation";
 import { useActionState, useEffect } from "react"
 import { toast } from "react-toastify";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
 
     const [state, formAction, isPending] = useActionState(LoginUser, null);
 
+    const { login, logout, user } = useAuth();
+
     useEffect(() => {
         if (state?.message) {
             if (state?.success) {
                 toast.success(state.message);
+                // Update auth context with user data
+                if (state?.data?.user) {
+                    login(state.data.user);
+                }
                 redirect('/');
             } else {
                 toast.error(state.message);
             }
         }
-    }, [state]);
+    }, [state, login]);
 
     return (
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-12">
