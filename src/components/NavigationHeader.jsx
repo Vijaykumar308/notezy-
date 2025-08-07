@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import CreateNotesButton from './CreateNotesButton'
+import ProfileDropdown from './ProfileDropdown'
 
 export function NavigationHeader({ currentUser }) {
   
@@ -32,10 +33,7 @@ export function NavigationHeader({ currentUser }) {
         
         <CreateNotesButton />
         
-        <Avatar className="w-8 h-8">
-          <AvatarImage src={currentUser?.avatar || "/placeholder.svg?height=32&width=32"} alt={currentUser?.name || "User"} />
-          <AvatarFallback>{currentUser?.name?.[0] || "U"}</AvatarFallback>
-        </Avatar>
+        <ProfileDropdown currentUser={currentUser} />
       </div>
     </header>
   )
