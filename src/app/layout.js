@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import { ToastContainer } from "react-toastify";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { NavigationHeader } from "@/components/NavigationHeader";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,8 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <Header />
+          {/* <Header /> */}
+          <NavigationHeader />
           {children}
           <ToastContainer position="top-right" autoClose={3000} />
         </AuthProvider>
