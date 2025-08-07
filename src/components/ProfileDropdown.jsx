@@ -55,7 +55,10 @@ export default function ProfileDropdown({ currentUser, onLogout }) {
             <Settings className="w-4 h-4" /> Settings
           </a>
           <button
-            onClick={onLogout}
+            onClick={() => {
+              // Place your logout logic here. For now, redirect to login page.
+              window.location.href = "/login";
+            }}
             className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 w-full text-left"
           >
             <LogOut className="w-4 h-4" /> Logout
