@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 import { LogOut, Settings, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
 
 export default function ProfileDropdown({ currentUser, onLogout }) {
   const [open, setOpen] = useState(false);
@@ -37,8 +38,13 @@ export default function ProfileDropdown({ currentUser, onLogout }) {
         tabIndex={0}
       >
         <Avatar className="w-8 h-8">
-          <AvatarImage src={currentUser?.avatar || "/placeholder.svg?height=32&width=32"} alt={currentUser?.name || "User"} />
-          <AvatarFallback>{currentUser?.name?.[0] || "U"}</AvatarFallback>
+          <AvatarImage 
+            src={currentUser?.avatar || "/placeholder.svg?height=32&width=32"} 
+            alt={currentUser?.fullname || currentUser?.name || "User"} 
+          />
+          <AvatarFallback className="bg-primary text-primary-foreground">
+            {getInitials(currentUser?.fullname || currentUser?.name || '') || 'U'}
+          </AvatarFallback>
         </Avatar>
       </button>
       {open && (

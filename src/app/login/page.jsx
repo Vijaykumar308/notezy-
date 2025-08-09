@@ -20,12 +20,17 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Attempt to log in
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ 
+          username: username.trim(),
+          password,
+          rememberMe: true
+        }),
         credentials: 'include',
       });
 
@@ -35,15 +40,23 @@ export default function LoginPage() {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Update auth context
-      await login(data.data.user);
-
-      // Redirect to the intended page or home
-      const redirectTo = searchParams.get('redirect') || '/';
-      router.push(redirectTo);
+      // First update the auth context with the user data from login response
+      const loginSuccess = await login(data.data.user);
+      
+      if (loginSuccess) {
+        // Get the redirect path from URL or default to '/'
+        const redirectTo = searchParams.get('redirect') || '/';
+        console.log('Login successful, redirecting to:', redirectTo);
+        
+        // Use replace instead of push to prevent going back to login page
+        router.replace(redirectTo);
+      } else {
+        throw new Error('Failed to initialize user session');
+      }
+      
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please try again.');
+      setError(err.message || 'Login failed. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }

@@ -178,51 +178,58 @@ export async function POST(req) {
 
     // Set secure HTTP-only cookies
     const isProduction = process.env.NODE_ENV === "production";
-    const domain = isProduction ? ".yourdomain.com" : "localhost";
     
+    // Base cookie options
     const cookieOptions = {
       httpOnly: true,
       secure: isProduction, // HTTPS only in production
-      sameSite: isProduction ? "lax" : "lax", // More compatible with most browsers
-      path: "/",
-      domain: domain,
-      maxAge: 60 * 60 * 24 * 7, // 7 days in seconds
-      sameSite: "lax"
+      sameSite: "lax",
+      path: "/"
     };
+    
+    // Set maxAge based on rememberMe
+    const maxAge = rememberMe ? 60 * 60 * 24 * 7 : 60 * 60; // 7 days or 1 hour
     
     console.log('Cookie options:', {
       ...cookieOptions,
-      domain: domain,
-      isProduction: isProduction
+      maxAge,
+      isProduction
     });
 
-    // Access token cookie (shorter expiry)
+    // Calculate token expiration times
     const accessTokenExpiry = rememberMe 
       ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
       : new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    console.log('Setting access token cookie with expiry:', accessTokenExpiry);
-    response.cookies.set({
-      name: "accessToken",
-      value: accessToken,
-      ...cookieOptions,
-      expires: accessTokenExpiry,
-    });
-
-    // Refresh token cookie (longer expiry)
     const refreshTokenExpiry = rememberMe
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
       : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    console.log('Setting refresh token cookie with expiry:', refreshTokenExpiry);
+    // Set access token cookie
+    response.cookies.set({
+      name: "accessToken",
+      value: accessToken,
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
+      expires: accessTokenExpiry,
+      maxAge: Math.floor((accessTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
+    });
+
+    // Set refresh token cookie
     response.cookies.set({
       name: "refreshToken",
       value: refreshToken,
-      ...cookieOptions,
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
       expires: refreshTokenExpiry,
+      maxAge: Math.floor((refreshTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
     });
 
-    // Set user session info cookie with initials
+    // Set user session info cookie (for client-side use)
     const userSessionData = {
       id: user._id,
       username: user.username,
@@ -232,7 +239,6 @@ export async function POST(req) {
       initials: userData.initials
     };
     
-    console.log('Setting user session cookie with data:', userSessionData);
     response.cookies.set({
       name: "userSession",
       value: JSON.stringify(userSessionData),
@@ -241,23 +247,17 @@ export async function POST(req) {
       sameSite: "lax",
       path: "/",
       expires: accessTokenExpiry,
+      maxAge: Math.floor((accessTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
     });
-    
-    // Log all cookies being set
-    console.log('All response cookies:', response.cookies.getAll().map(c => ({
-      name: c.name,
-      domain: c.domain,
-      path: c.path,
-      expires: c.expires,
-      httpOnly: c.httpOnly,
-      secure: c.secure,
-      sameSite: c.sameSite
-    })));
 
-    // Set a token cookie that will be used for API authentication
+    // Set token cookie for API authentication
     response.cookies.set("token", accessToken, {
-      ...cookieOptions,
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+      path: "/",
       expires: accessTokenExpiry,
+      maxAge: Math.floor((accessTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
     });
 
     return response;
@@ -265,10 +265,16 @@ export async function POST(req) {
   } catch (error) {
     console.error("Login Error:", error);
     
+    // More detailed error response
     return NextResponse.json(
       {
         success: false,
-        message: "Internal server error. Please try again later.",
+        message: error.message || "Internal server error. Please try again later.",
+        error: process.env.NODE_ENV === 'development' ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        } : undefined
       },
       { status: 500 }
     );

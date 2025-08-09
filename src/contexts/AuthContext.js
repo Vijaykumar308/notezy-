@@ -91,18 +91,21 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (userData) => {
     try {
+      console.log('Login called with userData:', userData);
       // For guest users, just store locally with initials
       if (userData.isGuest) {
         const guestWithInitials = {
           ...userData,
           initials: (userData.name || 'GU').substring(0, 2).toUpperCase()
         };
+        console.log('Setting guest user:', guestWithInitials);
         setUser(guestWithInitials);
         localStorage.setItem('user', JSON.stringify(guestWithInitials));
-        return;
+        return true;
       }
 
       // For regular users, verify with the server
+      console.log('Fetching user data from /api/auth/me');
       const response = await fetch('/api/auth/me', {
         method: 'GET',
         credentials: 'include',
@@ -114,6 +117,8 @@ export const AuthProvider = ({ children }) => {
 
       if (response.ok) {
         const result = await response.json();
+        console.log('User data from /api/auth/me:', result);
+        
         if (result.success && result.user) {
           // Ensure initials are set
           const userWithInitials = {
@@ -129,13 +134,15 @@ export const AuthProvider = ({ children }) => {
                 : (result.user.username || 'U').substring(0, 2).toUpperCase())
           };
           
+          console.log('Setting authenticated user:', userWithInitials);
           setUser(userWithInitials);
           localStorage.setItem('user', JSON.stringify(userWithInitials));
-          return;
+          return true;
         }
       }
 
       // Fallback to the provided userData if server verification fails
+      console.log('Using provided userData as fallback:', userData);
       const userWithInitials = {
         ...userData,
         initials: userData.fullname 
@@ -148,8 +155,10 @@ export const AuthProvider = ({ children }) => {
           : (userData.username || 'U').substring(0, 2).toUpperCase()
       };
       
+      console.log('Setting fallback user:', userWithInitials);
       setUser(userWithInitials);
       localStorage.setItem('user', JSON.stringify(userWithInitials));
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       // Still set the user if server verification fails
