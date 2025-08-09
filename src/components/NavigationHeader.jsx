@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Star, Search, Plus, } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -16,9 +17,9 @@ export function NavigationHeader({ currentUser }) {
         </div>
         
         <nav className="hidden md:flex items-center gap-6">
-          <a href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</a>
-          <a href="/explore" className="text-sm text-gray-600 hover:text-gray-900">Explore</a>
-          <a href="/notifications" className="text-sm text-gray-600 hover:text-gray-900">Notifications</a>
+          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</Link>
+          <Link href="/explore" className="text-sm text-gray-600 hover:text-gray-900">Explore</Link>
+          <Link href="/notifications" className="text-sm text-gray-600 hover:text-gray-900">Notifications</Link>
         </nav>
       </div>
       

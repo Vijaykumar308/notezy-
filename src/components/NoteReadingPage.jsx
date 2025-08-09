@@ -49,195 +49,130 @@ Remember, mindfulness is not about emptying your mind or achieving a state of et
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/">
-                <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-900">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Notes
-                </Button>
-              </Link>
-              <div className="text-sm text-gray-500">
-                <span className="hover:text-gray-700 cursor-pointer">Notes</span>
-                <span className="mx-2">/</span>
-                <span className="text-gray-900 font-medium">Reading Note</span>
+      {/* Note Header Section */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 py-8 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4 mb-4 sm:mb-0">
+            <Avatar className="w-14 h-14">
+              <AvatarImage src={currentNote.author?.avatar || "/placeholder.svg"} alt={currentNote.author?.name} />
+              <AvatarFallback>{currentNote.author?.initials || currentNote.author?.name?.[0]}</AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-lg text-gray-900">{currentNote.author?.name}</span>
+                <span className="text-xs text-gray-500">•</span>
+                <span className="text-xs text-gray-500">{currentNote.publishedDate}</span>
+                <span className="text-xs text-gray-500">•</span>
+                <span className="text-xs text-gray-500">{currentNote.readTime}</span>
+              </div>
+              <div className="mt-1">
+                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {currentNote.category}
+                </span>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsLiked(!isLiked)}
-                className={`${isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
-                <span className="ml-1 text-sm">{currentNote.likes + (isLiked ? 1 : 0)}</span>
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsBookmarked(!isBookmarked)}
-                className={`${isBookmarked ? 'text-blue-500 hover:text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
-              </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
-                    <MoreHorizontal className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem className="flex items-center">
-                    <Edit3 className="w-4 h-4 mr-2" />
-                    Edit Note
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center">
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share Note
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center text-red-600">
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Note
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsLiked(!isLiked)}
+              className={`${isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+              <span className="ml-1 text-sm">{currentNote.likes + (isLiked ? 1 : 0)}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsBookmarked(!isBookmarked)}
+              className={`${isBookmarked ? 'text-blue-500 hover:text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Bookmark className={`w-5 h-5 ${isBookmarked ? 'fill-current' : ''}`} />
+              <span className="ml-1 text-sm">{currentNote.bookmarks + (isBookmarked ? 1 : 0)}</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700">
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem className="flex items-center">
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit Note
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center">
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share Note
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center text-red-600">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Note
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <article className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* Header */}
-          <div className="px-8 py-8 border-b border-gray-100">
-            {/* Category Badge */}
-            <div className="mb-4">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                {currentNote.category}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">{currentNote.title}</h1>
+        {currentNote.description && (
+          <p className="text-lg text-gray-700 mb-6">{currentNote.description}</p>
+        )}
+        <div className="prose prose-lg max-w-none mb-8">
+          {currentNote.content.split('\n\n').map((paragraph, index) => {
+            if (paragraph.startsWith('#')) {
+              return (
+                <h2 key={index} className="text-2xl font-bold text-gray-900 mt-8 mb-4">
+                  {paragraph.replace(/^#+\s/, '')}
+                </h2>
+              );
+            } else if (paragraph.match(/^\d+\./)) {
+              const items = paragraph.split(/\d+\.\s/).filter(item => item.trim());
+              return (
+                <ol key={index} className="list-decimal list-inside space-y-2 my-6">
+                  {items.map((item, itemIndex) => (
+                    <li key={itemIndex} className="text-gray-700 leading-relaxed">
+                      {item.includes('**') ? (
+                        <span>
+                          <strong className="font-semibold text-gray-900">
+                            {item.split('**')[1]}
+                          </strong>
+                          {item.split('**')[2]}
+                        </span>
+                      ) : (
+                        item
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              );
+            } else {
+              return (
+                <p key={index} className="text-gray-700 leading-relaxed mb-6 text-lg">
+                  {paragraph}
+                </p>
+              );
+            }
+          })}
+        </div>
+
+        {/* Tags */}
+        <div className="flex items-center space-x-2 mb-8">
+          <span className="text-sm font-medium text-gray-500">Tags:</span>
+          <div className="flex flex-wrap gap-2">
+            {currentNote.tags?.map((tag, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer transition-colors"
+              >
+                #{tag}
               </span>
-            </div>
-
-            {/* Title */}
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 leading-tight">
-              {currentNote.title}
-            </h1>
-
-            {/* Author Info */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Avatar className="w-12 h-12">
-                  <AvatarImage src={currentNote.author.avatar} alt={currentNote.author.name} />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                    {currentNote.author.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold text-gray-900">{currentNote.author.name}</p>
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      Published on {currentNote.publishedDate}
-                    </span>
-                    <span>•</span>
-                    <span>{currentNote.readTime}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <Button variant="outline" size="sm" className="flex items-center">
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Edit
-                </Button>
-                <Button variant="outline" size="sm" className="flex items-center">
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
-                <Button variant="outline" size="sm" className="flex items-center text-red-600 border-red-200 hover:bg-red-50">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
-                </Button>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* Content */}
-          <div className="px-8 py-8">
-            <div className="prose prose-lg max-w-none">
-              {currentNote.content.split('\n\n').map((paragraph, index) => {
-                if (paragraph.startsWith('#')) {
-                  return (
-                    <h2 key={index} className="text-2xl font-bold text-gray-900 mt-8 mb-4">
-                      {paragraph.replace(/^#+\s/, '')}
-                    </h2>
-                  );
-                } else if (paragraph.match(/^\d+\./)) {
-                  const items = paragraph.split(/\d+\.\s/).filter(item => item.trim());
-                  return (
-                    <ol key={index} className="list-decimal list-inside space-y-2 my-6">
-                      {items.map((item, itemIndex) => (
-                        <li key={itemIndex} className="text-gray-700 leading-relaxed">
-                          {item.includes('**') ? (
-                            <span>
-                              <strong className="font-semibold text-gray-900">
-                                {item.split('**')[1]}
-                              </strong>
-                              {item.split('**')[2]}
-                            </span>
-                          ) : (
-                            item
-                          )}
-                        </li>
-                      ))}
-                    </ol>
-                  );
-                } else {
-                  return (
-                    <p key={index} className="text-gray-700 leading-relaxed mb-6 text-lg">
-                      {paragraph}
-                    </p>
-                  );
-                }
-              })}
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="px-8 py-6 bg-gray-50 border-t border-gray-100">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-500">Tags:</span>
-              <div className="flex flex-wrap gap-2">
-                {currentNote.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 cursor-pointer transition-colors"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </article>
-
-        {/* Action Buttons */}
-        <div className="mt-8 flex justify-center space-x-4">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8">
-            <Edit3 className="w-4 h-4 mr-2" />
-            Edit This Note
-          </Button>
-          <Button variant="outline" className="px-8">
-            <Share2 className="w-4 h-4 mr-2" />
-            Share Note
-          </Button>
         </div>
       </div>
     </div>

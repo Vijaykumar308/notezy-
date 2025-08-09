@@ -12,6 +12,45 @@ function titleToSlug(title) {
 
 // Sample notes data - in a real app, this would come from a database
 const notesData = {
+  "how-to-stay-productive-as-a-developer": {
+    id: "101",
+    title: "How to Stay Productive as a Developer",
+    slug: "how-to-stay-productive-as-a-developer",
+    content: `Discover actionable strategies and tips for maintaining productivity, focus, and motivation as a software developer, even when working remotely or facing distractions.\n\n## Tips\n1. **Set clear goals**: Know what you want to accomplish each day.\n2. **Eliminate distractions**: Use tools and routines to stay focused.\n3. **Take breaks**: Regular breaks boost creativity and prevent burnout.\n4. **Stay connected**: Collaborate and communicate with your team.`,
+    author: { name: "Alex Kim", avatar: "/placeholder.svg", initials: "AK" },
+    publishedDate: "Aug 1, 2024",
+    readTime: "4 min read",
+    category: "Productivity",
+    tags: ["productivity", "developer", "focus", "motivation"],
+    likes: 12,
+    bookmarks: 5
+  },
+  "understanding-async-await-in-javascript": {
+    id: "102",
+    title: "Understanding Async/Await in JavaScript",
+    slug: "understanding-async-await-in-javascript",
+    content: `A beginner's guide to mastering async programming in JS.\n\nAsync/await makes asynchronous code easier to read and write.\n\n## Key Points\n1. **Async functions** return a promise.\n2. **Await** pauses execution until the promise resolves.\n3. **Error handling**: Use try/catch for async code.`,
+    author: { name: "Priya S.", avatar: "/placeholder.svg", initials: "PS" },
+    publishedDate: "Aug 2, 2024",
+    readTime: "3 min read",
+    category: "Tech",
+    tags: ["javascript", "async", "await", "programming"],
+    likes: 8,
+    bookmarks: 3
+  },
+  "work-life-balance-for-remote-engineers": {
+    id: "103",
+    title: "Work-Life Balance for Remote Engineers",
+    slug: "work-life-balance-for-remote-engineers",
+    content: `How to set boundaries and thrive while working remotely.\n\n## Strategies\n1. **Set boundaries**: Define clear work and personal time.\n2. **Create a workspace**: Separate work from home life.\n3. **Stay active**: Incorporate movement into your day.\n4. **Connect socially**: Don't neglect team and social interactions.`,
+    author: { name: "Maria L.", avatar: "/placeholder.svg", initials: "ML" },
+    publishedDate: "Aug 3, 2024",
+    readTime: "5 min read",
+    category: "Life",
+    tags: ["work-life", "remote", "engineer", "balance"],
+    likes: 10,
+    bookmarks: 2
+  },
   "meeting-notes": {
     id: 1,
     title: "Meeting Notes",
