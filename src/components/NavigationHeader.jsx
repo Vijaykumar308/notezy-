@@ -1,41 +1,80 @@
-import Link from "next/link";
-import { Star, Search, Plus, } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import CreateNotesButton from './CreateNotesButton'
-import ProfileDropdown from './ProfileDropdown'
+'use client';
 
-export function NavigationHeader({ currentUser }) {
+import Link from "next/link";
+import { Star, Search } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import CreateNotesButton from './CreateNotesButton';
+import ProfileDropdown from './ProfileDropdown';
+import { useAuth } from "@/contexts/AuthContext";
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+
+export function NavigationHeader() {
+  const { user, isLoading, isAuthenticated } = useAuth();
+  const pathname = usePathname();
+  
+  // Don't render anything if we're still loading the auth state
+  if (isLoading) {
+    return null;
+  }
+  
+  // Don't show navigation header on login/register pages
+  if (['/login', '/register'].includes(pathname)) {
+    return null;
+  }
   
   return (
-    <header className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
-      <div className="flex items-center gap-8">
-        <div className="flex items-center gap-2">
-          <Star className="w-5 h-5 text-gray-700" />
-          <h1 className="text-lg font-semibold text-gray-900">NoteShare</h1>
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 max-w-screen-2xl items-center">
+        <div className="mr-4 hidden md:flex">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <Star className="h-6 w-6" />
+            <span className="hidden font-bold sm:inline-block">NoteShare</span>
+          </Link>
+          {isAuthenticated && (
+            <nav className="flex items-center space-x-6 text-sm font-medium">
+              <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground">
+                Home
+              </Link>
+              <Link href="/explore" className="transition-colors hover:text-foreground/80 text-foreground/60">
+                Explore
+              </Link>
+              <Link href="/notifications" className="transition-colors hover:text-foreground/80 text-foreground/60">
+                Notifications
+              </Link>
+            </nav>
+          )}
         </div>
         
-        <nav className="hidden md:flex items-center gap-6">
-          <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">Home</Link>
-          <Link href="/explore" className="text-sm text-gray-600 hover:text-gray-900">Explore</Link>
-          <Link href="/notifications" className="text-sm text-gray-600 hover:text-gray-900">Notifications</Link>
-        </nav>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Search"
-            className="pl-10 w-64 bg-gray-50 border-gray-200"
-          />
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          {isAuthenticated ? (
+            <>
+              <div className="w-full flex-1 md:w-auto md:flex-none">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search..."
+                    className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
+                  />
+                </div>
+              </div>
+              <CreateNotesButton />
+              <ProfileDropdown currentUser={user} />
+            </>
+          ) : (
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" asChild>
+                <Link href="/login">Log in</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/register">Sign up</Link>
+              </Button>
+            </div>
+          )}
         </div>
-        
-        <CreateNotesButton />
-        
-        <ProfileDropdown currentUser={currentUser} />
       </div>
     </header>
-  )
+  );
 }
