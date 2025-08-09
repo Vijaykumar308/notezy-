@@ -59,7 +59,9 @@ Remember, mindfulness is not about emptying your mind or achieving a state of et
             </Avatar>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold text-lg text-gray-900">{currentNote.author?.name}</span>
+                <Link href={`/profile/${encodeURIComponent(currentNote.author?.name || '')}`} className="font-semibold text-lg text-gray-900 hover:text-blue-600 hover:underline">
+                  {currentNote.author?.name}
+                </Link>
                 <span className="text-xs text-gray-500">•</span>
                 <span className="text-xs text-gray-500">{currentNote.publishedDate}</span>
                 <span className="text-xs text-gray-500">•</span>

@@ -11,28 +11,25 @@ export async function GET() {
       { status: 200 }
     );
 
-    // Clear all authentication cookies
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      expires: new Date(0), // Set to past date to delete cookie
-    };
+    // Clear all possible authentication cookies
+    const cookiesToClear = [
+      'accessToken',
+      'refreshToken',
+      'token',
+      'userSession',
+      'next-auth.session-token',
+      '__Secure-next-auth.session-token'
+    ];
 
-    // Clear access token
-    response.cookies.set("accessToken", "", cookieOptions);
-    
-    // Clear refresh token
-    response.cookies.set("refreshToken", "", cookieOptions);
-    
-    // Clear user session (this one is not httpOnly)
-    response.cookies.set("userSession", "", {
-      httpOnly: false,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      expires: new Date(0),
+    // Clear each cookie
+    cookiesToClear.forEach(cookieName => {
+      response.cookies.set(cookieName, "", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        expires: new Date(0)
+      });
     });
 
     return response;
