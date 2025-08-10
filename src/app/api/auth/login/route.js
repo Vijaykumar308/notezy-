@@ -109,8 +109,6 @@ export async function POST(req) {
       JWT_SECRET,
       { 
         expiresIn: rememberMe ? "7d" : "1h", // Longer if remember me is checked
-        issuer: "your-app-name",
-        audience: "your-app-users"
       }
     );
 
@@ -178,7 +176,7 @@ export async function POST(req) {
 
     // Set session token cookie for API authentication
     response.cookies.set("token", sessionToken, {
-      httpOnly: true,
+      httpOnly: false,
       secure: isProduction,
       sameSite: "lax",
       path: "/",

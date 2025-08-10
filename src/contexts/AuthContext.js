@@ -105,27 +105,56 @@ export const AuthProvider = ({ children }) => {
         // Clear all auth-related data
         setUser(null);
         localStorage.clear();
+        sessionStorage.clear();
         
         // Clear all cookies that might be set
-        const cookies = document.cookie.split(';');
         const hostname = window.location.hostname;
         const domainParts = hostname.split('.');
         const domain = domainParts.length > 1 
           ? domainParts.slice(-2).join('.')
           : hostname;
         
+        // List of all possible cookie names to clear
+        const cookieNames = [
+          'token',
+          'userSession',
+          'session',
+          'sessionId',
+          'auth',
+          'auth._token',
+          'auth.strategy'
+        ];
+        
         // Clear all cookies with various domain and path combinations
-        cookies.forEach(cookie => {
+        cookieNames.forEach(name => {
+          if (!name) return;
+          
+          // Clear with domain and root path
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${domain}`;
+          
+          // Clear with .domain for subdomains
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${domain}`;
+          
+          // Clear without domain (for current host only)
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+          
+          // Clear with /api path
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/api`;
+          
+          // Clear with domain and /api path
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/api; domain=${domain}`;
+          
+          // Clear with .domain and /api path
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/api; domain=.${domain}`;
+        });
+        
+        // Also clear all cookies from document.cookie (for good measure)
+        document.cookie.split(';').forEach(cookie => {
           const [name] = cookie.trim().split('=');
           if (name) {
-            // Clear with domain
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${domain}`;
-            // Clear with .domain for subdomains
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${domain}`;
-            // Clear without domain
             document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
-            // Clear with /api path
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/api`;
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=${domain}`;
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.${domain}`;
           }
         });
       }
