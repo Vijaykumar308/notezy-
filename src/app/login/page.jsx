@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClearAuthOnRoutes } from '@/hooks/useClearAuthOnRoutes';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -13,6 +14,9 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
+  
+  // Clear any auth data when on login page
+  useClearAuthOnRoutes();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,28 +24,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Attempt to log in
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          username: username.trim(),
-          password,
-          rememberMe: true
-        }),
-        credentials: 'include',
+      // Clear any existing auth state before login
+      localStorage.removeItem('user');
+      
+      // Use the login function from AuthContext
+      const loginSuccess = await login({
+        username: username.trim(),
+        password,
+        rememberMe: true
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      // First update the auth context with the user data from login response
-      const loginSuccess = await login(data.data.user);
       
       if (loginSuccess) {
         // Get the redirect path from URL or default to '/'
@@ -50,8 +41,15 @@ export default function LoginPage() {
         
         // Use replace instead of push to prevent going back to login page
         router.replace(redirectTo);
+        
+        // Fallback in case the router doesn't work
+        setTimeout(() => {
+          if (window.location.pathname === '/login') {
+            window.location.href = redirectTo;
+          }
+        }, 500);
       } else {
-        throw new Error('Failed to initialize user session');
+        throw new Error('Login failed. Please check your credentials and try again.');
       }
       
     } catch (err) {

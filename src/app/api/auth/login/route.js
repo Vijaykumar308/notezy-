@@ -7,13 +7,9 @@ import { cookies } from "next/headers";
 
 // JWT secret - should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key';
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key') {
   console.warn('WARNING: Using default JWT secret. This is not secure for production!');
-}
-if (!process.env.JWT_REFRESH_SECRET || process.env.JWT_REFRESH_SECRET === 'your-refresh-secret-key') {
-  console.warn('WARNING: Using default JWT refresh secret. This is not secure for production!');
 }
 
 export async function POST(req) {
@@ -107,44 +103,16 @@ export async function POST(req) {
       role: user.role,
     };
 
-    // Common JWT options
-    const jwtOptions = {
-      issuer: "your-app-name",
-      audience: "your-app-users"
-    };
-
-    // Generate access token (short-lived)
-    const accessToken = jwt.sign(
+    // Generate session token
+    const sessionToken = jwt.sign(
       tokenPayload,
       JWT_SECRET,
       { 
         expiresIn: rememberMe ? "7d" : "1h", // Longer if remember me is checked
-        issuer: "your-app-name",
-        audience: "your-app-users"
       }
     );
 
-    console.log('Generated access token with payload:', tokenPayload);
-
-    // Generate refresh token (long-lived)
-    const refreshToken = jwt.sign(
-      { 
-        userId: user._id.toString(),
-        username: user.username
-      },
-      JWT_REFRESH_SECRET,
-      { 
-        expiresIn: rememberMe ? "30d" : "7d",
-        issuer: "your-app-name",
-        audience: "your-app-users"
-      }
-    );
-    
-    console.log('Generated refresh token for user:', user._id);
-
-    // Log the token for debugging (remove in production)
-    console.log('Generated access token:', accessToken);
-    console.log('Token payload:', tokenPayload);
+    console.log('Generated session token with payload:', tokenPayload);
 
     // Create response with user data including initials
     const userData = {
@@ -179,55 +147,10 @@ export async function POST(req) {
     // Set secure HTTP-only cookies
     const isProduction = process.env.NODE_ENV === "production";
     
-    // Base cookie options
-    const cookieOptions = {
-      httpOnly: true,
-      secure: isProduction, // HTTPS only in production
-      sameSite: "lax",
-      path: "/"
-    };
-    
-    // Set maxAge based on rememberMe
-    const maxAge = rememberMe ? 60 * 60 * 24 * 7 : 60 * 60; // 7 days or 1 hour
-    
-    console.log('Cookie options:', {
-      ...cookieOptions,
-      maxAge,
-      isProduction
-    });
-
-    // Calculate token expiration times
-    const accessTokenExpiry = rememberMe 
+    // Calculate token expiration time
+    const tokenExpiry = rememberMe 
       ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
       : new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-    const refreshTokenExpiry = rememberMe
-      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-    // Set access token cookie
-    response.cookies.set({
-      name: "accessToken",
-      value: accessToken,
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
-      path: "/",
-      expires: accessTokenExpiry,
-      maxAge: Math.floor((accessTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
-    });
-
-    // Set refresh token cookie
-    response.cookies.set({
-      name: "refreshToken",
-      value: refreshToken,
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax",
-      path: "/",
-      expires: refreshTokenExpiry,
-      maxAge: Math.floor((refreshTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
-    });
 
     // Set user session info cookie (for client-side use)
     const userSessionData = {
@@ -239,6 +162,7 @@ export async function POST(req) {
       initials: userData.initials
     };
     
+    // Set user session cookie
     response.cookies.set({
       name: "userSession",
       value: JSON.stringify(userSessionData),
@@ -246,18 +170,18 @@ export async function POST(req) {
       secure: isProduction,
       sameSite: "lax",
       path: "/",
-      expires: accessTokenExpiry,
-      maxAge: Math.floor((accessTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
+      expires: tokenExpiry,
+      maxAge: Math.floor((tokenExpiry.getTime() - Date.now()) / 1000) // in seconds
     });
 
-    // Set token cookie for API authentication
-    response.cookies.set("token", accessToken, {
-      httpOnly: true,
+    // Set session token cookie for API authentication
+    response.cookies.set("token", sessionToken, {
+      httpOnly: false,
       secure: isProduction,
       sameSite: "lax",
       path: "/",
-      expires: accessTokenExpiry,
-      maxAge: Math.floor((accessTokenExpiry.getTime() - Date.now()) / 1000) // in seconds
+      expires: tokenExpiry,
+      maxAge: Math.floor((tokenExpiry.getTime() - Date.now()) / 1000) // in seconds
     });
 
     return response;
