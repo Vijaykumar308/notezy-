@@ -3,10 +3,14 @@ import { useActionState, useEffect, useState } from "react"
 import Link from "next/link"
 import { registerUser } from "@/actions/userActions";
 import { toast } from 'react-toastify';
+import { useClearAuthOnRoutes } from "@/hooks/useClearAuthOnRoutes";
 
 export default function RegisterPage() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [state, formAction, isPending] = useActionState(registerUser);
+  
+  // Clear any auth data when on register page
+  useClearAuthOnRoutes();
 
   useEffect(() => {
   if (state?.message) {

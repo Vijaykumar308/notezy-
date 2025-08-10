@@ -1,91 +1,196 @@
 import { NextResponse } from 'next/server';
-import { verifyToken } from './lib/jwt';
 
-// Define public paths that don't require authentication
-const publicPaths = ['/login', '/register', '/api/auth/login', '/api/auth/register'];
+// Public paths that don't require authentication
+const PUBLIC_PATHS = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/logout',
+  '/_next',
+  '/favicon.ico',
+  '/_error'
+];
+
+// Auth-related cookies to check
+const AUTH_COOKIES = [
+  'token',
+  'accessToken',
+  'refreshToken',
+  'userSession',
+  'next-auth.session-token',
+  '__Secure-next-auth.session-token',
+  'session',
+  'sessionId',
+  'userId',
+  'auth._token',
+  'auth._token_expiration'
+];
+
+// Check if the request is for a public path
+const isPublicPath = (pathname) => {
+  return PUBLIC_PATHS.some(path => 
+    pathname === path || 
+    pathname.startsWith(path + '/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/api/auth/') ||
+    pathname.includes('.')
+  );
+};
+
+// Check if user is authenticated
+const isAuthenticated = (request) => {
+  return AUTH_COOKIES.some(
+    cookie => {
+      const value = request.cookies.get(cookie)?.value;
+      return value && value !== 'undefined' && value !== 'null' && value !== '';
+    }
+  );
+};
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-
-  // Skip middleware for public paths
-  if (publicPaths.some(path => pathname.startsWith(path))) {
-    return NextResponse.next();
-  }
-
-  // Skip middleware for static files and Next.js internals
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/static') ||
-    pathname.includes('.')
-  ) {
-    return NextResponse.next();
-  }
-
-  // Check for authentication token - try both 'accessToken' and 'token' cookie names
-  const accessToken = request.cookies.get('accessToken')?.value;
-  const token = request.cookies.get('token')?.value;
-  const authToken = accessToken || token;
   
-  // For API routes, return JSON response
-  if (pathname.startsWith('/api/')) {
-    // Skip auth check for login and auth-related endpoints
-    if (pathname.startsWith('/api/auth/')) {
-      return NextResponse.next();
+  // Skip middleware for public paths and static files
+  if (isPublicPath(pathname)) {
+    const response = NextResponse.next();
+    
+    // Don't cache auth-related pages
+    if (pathname.startsWith('/login') || pathname.startsWith('/register')) {
+      response.headers.set('Cache-Control', 'no-store, max-age=0');
+      response.headers.set('Pragma', 'no-cache');
     }
+    
+    return response;
+  }
 
-    if (!authToken) {
-      console.log('No auth token found in cookies');
-      return NextResponse.json(
-        { 
+  // For API routes
+  if (pathname.startsWith('/api/')) {
+    if (!isAuthenticated(request)) {
+      return new NextResponse(
+        JSON.stringify({ 
           success: false, 
-          message: 'Unauthorized - No authentication token found',
-          cookies: request.cookies.getAll().map(c => c.name)
-        },
-        { status: 401 }
+          message: 'Unauthorized',
+          error: 'Authentication required'
+        }), 
+        { 
+          status: 401, 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          } 
+        }
       );
     }
+    
+    const response = NextResponse.next();
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    return response;
+  }
 
-    try {
-      console.log('Verifying token in middleware...');
-      // Verify the token
-      await verifyToken(authToken);
-      console.log('Token verified successfully in middleware');
-      return NextResponse.next();
-    } catch (error) {
-      console.error('Token verification failed in middleware:', {
-        error: error.message,
-        name: error.name,
-        token: authToken ? `${authToken.substring(0, 10)}...` : 'No token',
-        cookies: request.cookies.getAll().map(c => c.name)
+  // For page routes
+  if (!isAuthenticated(request)) {
+    // Create redirect response to login
+    const loginUrl = new URL('/login', request.url);
+    if (pathname !== '/') {
+      loginUrl.searchParams.set('redirect', pathname);
+    }
+    
+    const response = NextResponse.redirect(loginUrl);
+    
+    // Clear any existing auth cookies
+    AUTH_COOKIES.forEach(cookie => {
+      response.cookies.set(cookie, '', { 
+        path: '/', 
+        expires: new Date(0),
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
       });
       
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Invalid or expired token',
-          error: error.message,
-          errorName: error.name
-        },
-        { status: 401 }
-      );
-    }
+      // Clear for localhost in development
+      if (process.env.NODE_ENV !== 'production') {
+        response.cookies.set(cookie, '', {
+          path: '/',
+          domain: 'localhost',
+          expires: new Date(0),
+          httpOnly: true,
+          secure: false,
+          sameSite: 'lax'
+        });
+      }
+    });
+    
+    return response;
   }
 
-  // For page routes, redirect to login if not authenticated
-  if (!token) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
+  // For authenticated users, add security headers
+  const response = NextResponse.next();
+  
+  // Check if we're on login or register page
+  const isAuthPage = request.nextUrl.pathname === '/login' || 
+                    request.nextUrl.pathname === '/register' ||
+                    request.nextUrl.pathname === '/login/' ||
+                    request.nextUrl.pathname === '/register/';
+
+  // Clear all cookies on auth pages
+  if (isAuthPage) {
+    // Get all cookies
+    const cookies = request.headers.get('cookie') || '';
+    const cookieList = cookies.split(';').map(cookie => cookie.trim().split('=')[0]);
+    
+    // Clear each cookie
+    cookieList.forEach(cookieName => {
+      if (cookieName) {
+        response.cookies.set({
+          name: cookieName,
+          value: '',
+          path: '/',
+          expires: new Date(0),
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production'
+        });
+      }
+    });
+
+    // Clear all possible auth cookies to be extra sure
+    const authCookies = ['accessToken', 'token', 'session', 'userSession', 'auth'];
+    authCookies.forEach(cookieName => {
+      response.cookies.set({
+        name: cookieName,
+        value: '',
+        path: '/',
+        expires: new Date(0),
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production'
+      });
+    });
   }
 
-  // If we have a token, we assume the user is authenticated.
-  // The actual verification can happen on the client-side or in API routes if needed.
-  return NextResponse.next();
+  // Security headers
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  
+  // Cache control for authenticated pages
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+  response.headers.set('Surrogate-Control', 'no-store');
+  
+  return response;
 }
 
-// Configure which paths the middleware runs on
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };
