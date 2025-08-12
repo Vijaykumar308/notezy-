@@ -1,27 +1,56 @@
 import { connectDB } from '@/lib/dbconn';
 import { NextResponse } from 'next/server';
 import Tag from '@/models/tagModel';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import jwt from 'jsonwebtoken';
 
 // Connect to the database
 await connectDB();
+
+// Helper function to verify JWT token
+async function verifyToken(token) {
+  if (!token) return null;
+  
+  try {
+    // Replace 'your-secret-key' with your actual JWT secret from environment variables
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    return jwt.verify(token, secret);
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    return null;
+  }
+}
+
+// Helper function to get user ID from request
+async function getUserIdFromRequest(request) {
+  // Try to get from Authorization header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1];
+    const decoded = await verifyToken(token);
+    if (decoded?.userId) {
+      return decoded.userId;
+    }
+  }
+  return null;
+}
+
+
 
 // GET /api/tags - Get all tags for the authenticated user
 export async function GET(request) {
   try {
     console.log('GET /api/tags - Starting request');
     
-    const session = await getServerSession(authOptions);
-    console.log('Session data:', session);
+    const userId = await getUserIdFromRequest(request);
+    console.log('User ID from request:', userId);
     
-    if (!session?.user?.id) {
-      console.error('No session or user ID found');
+    if (!userId) {
+      console.error('No user ID found in session or token');
       return NextResponse.json(
         { 
           success: false, 
           message: 'Not authenticated',
-          error: 'No valid session or user ID found' 
+          error: 'No valid authentication token found' 
         },
         { status: 401 }
       );
@@ -35,10 +64,10 @@ export async function GET(request) {
     const order = searchParams.get('order') || 'desc';
 
     // Build query
-    console.log('Building query for user ID:', session.user.id);
+    console.log('Building query for user ID:', userId);
     const query = {
       $or: [
-        { createdBy: session.user.id },
+        { createdBy: userId },
         { isCustom: false } // Include system tags
       ]
     };
@@ -97,8 +126,9 @@ export async function GET(request) {
 // POST /api/tags - Create a new tag
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const userId = await getUserIdFromRequest(request);
+    
+    if (!userId) {
       return NextResponse.json(
         { success: false, message: 'Not authenticated' },
         { status: 401 }
@@ -116,13 +146,13 @@ export async function POST(request) {
     }
 
     const tagName = name.trim().toLowerCase();
-    console.log(`Checking for existing tag with name: ${tagName} for user: ${session.user.id}`);
+    console.log(`Checking for existing tag with name: ${tagName} for user: ${userId}`);
     
     // Check if tag already exists for this user or is a system tag
     const existingTag = await Tag.findOne({
       name: tagName,
       $or: [
-        { createdBy: session.user.id },
+        { createdBy: userId },
         { isCustom: false } // Check against system tags too
       ]
     });
@@ -153,7 +183,7 @@ export async function POST(request) {
     console.log('Creating new tag with data:', {
       name: tagName,
       color: color || '#3b82f6',
-      createdBy: session.user.id,
+      createdBy: userId,
       isCustom: true
     });
     
@@ -162,7 +192,7 @@ export async function POST(request) {
       tag = await Tag.create({
         name: tagName,
         color: color || '#3b82f6',
-        createdBy: session.user.id,
+        createdBy: userId,
         isCustom: true
       });
       console.log('Successfully created tag:', tag);
@@ -201,8 +231,9 @@ export async function POST(request) {
 // DELETE /api/tags/:id - Delete a tag
 export async function DELETE(request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const userId = await getUserIdFromRequest(request);
+    
+    if (!userId) {
       return NextResponse.json(
         { success: false, message: 'Not authenticated' },
         { status: 401 }
@@ -220,7 +251,7 @@ export async function DELETE(request) {
     }
 
     // Find the tag
-    const tag = await Tag.findById(id);
+    const tag = await Tag.findOne({ _id: id, createdBy: userId });
     
     if (!tag) {
       return NextResponse.json(
@@ -229,14 +260,7 @@ export async function DELETE(request) {
       );
     }
 
-    // Check if the tag belongs to the user
-    if (tag.createdBy.toString() !== session.user.id && tag.isCustom) {
-      return NextResponse.json(
-        { success: false, message: 'Not authorized to delete this tag' },
-        { status: 403 }
-      );
-    }
-
+    // Check if the tag is in use
     // Don't allow deleting system tags
     if (!tag.isCustom) {
       return NextResponse.json(
@@ -249,7 +273,7 @@ export async function DELETE(request) {
     const Note = (await import('@/models/noteModel')).default;
     const notesUsingTag = await Note.countDocuments({ 
       tags: tag._id,
-      createdBy: session.user.id 
+      createdBy: userId 
     });
 
     if (notesUsingTag > 0) {

@@ -3,10 +3,10 @@ import { User } from "@/models/userModel";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
 
 // JWT secret - should be in environment variables
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_EXPIRES_IN = '7d'; // Token expires in 7 days
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key') {
   console.warn('WARNING: Using default JWT secret. This is not secure for production!');
@@ -36,14 +36,23 @@ export async function POST(req) {
     const user = await User.findByEmailOrUsername(normalizedIdentifier);
     
     if (!user) {
+      console.log('User not found for identifier:', normalizedIdentifier);
       return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid credentials",
+        { 
+          success: false, 
+          message: 'Invalid credentials',
+          debug: { identifier: normalizedIdentifier, userFound: false }
         },
         { status: 401 }
       );
     }
+    
+    console.log('Found user:', { 
+      _id: user._id, 
+      username: user.username, 
+      email: user.email,
+      hasPassword: !!user.password
+    });
 
     // Check if account is locked
     if (user.isLocked) {
@@ -69,16 +78,21 @@ export async function POST(req) {
     }
 
     // Verify password
+    console.log('Comparing passwords...');
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    
     if (!isPasswordValid) {
-      // Increment login attempts
-      await user.incLoginAttempts();
-      
+      console.log('Invalid password for user:', user.email);
+      console.log('Provided password:', password);
+      console.log('Stored hash:', user.password ? '[hash exists]' : '[no password hash]');
       return NextResponse.json(
-        {
-          success: false,
-          message: "Invalid credentials",
+        { 
+          success: false, 
+          message: 'Invalid credentials',
+          debug: { 
+            passwordMatch: false,
+            hasStoredPassword: !!user.password,
+            passwordLength: password?.length
+          }
         },
         { status: 401 }
       );
@@ -95,16 +109,16 @@ export async function POST(req) {
       rememberMe: Boolean(rememberMe),
     });
 
-    // Create JWT payload
+    // Create JWT token
     const tokenPayload = {
-      userId: user._id,
-      username: user.username,
+      userId: user._id.toString(),
       email: user.email,
+      username: user.username,
       role: user.role,
     };
 
-    // Generate session token
-    const sessionToken = jwt.sign(
+    // Generate JWT token
+    const token = jwt.sign(
       tokenPayload,
       JWT_SECRET,
       { 
@@ -112,7 +126,7 @@ export async function POST(req) {
       }
     );
 
-    console.log('Generated session token with payload:', tokenPayload);
+    console.log('Generated JWT token with payload:', tokenPayload);
 
     // Create response with user data including initials
     const userData = {
@@ -139,7 +153,8 @@ export async function POST(req) {
       {
         success: true,
         message: "Login successful",
-        data: { user: userData },
+        token,
+        user: userData,
       },
       { status: 200 }
     );
@@ -159,7 +174,14 @@ export async function POST(req) {
       fullname: user.fullname,
       role: user.role,
       isLoggedIn: true,
-      initials: userData.initials
+      initials: user.fullname 
+        ? user.fullname
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2)
+        : (user.username || 'U').substring(0, 2).toUpperCase()
     };
     
     // Set user session cookie
@@ -175,7 +197,7 @@ export async function POST(req) {
     });
 
     // Set session token cookie for API authentication
-    response.cookies.set("token", sessionToken, {
+    response.cookies.set("token", token, {
       httpOnly: false,
       secure: isProduction,
       sameSite: "lax",

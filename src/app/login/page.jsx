@@ -5,11 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useClearAuthOnRoutes } from '@/hooks/useClearAuthOnRoutes';
 import Link from 'next/link';
+import {toast} from 'react-toastify';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,7 +21,8 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    // Clear any previous toasts
+    toast.dismiss();
     setIsLoading(true);
 
     try {
@@ -34,27 +36,48 @@ export default function LoginPage() {
         rememberMe: true
       });
       
+      // If we get here, login was successful
       if (loginSuccess) {
-        // Get the redirect path from URL or default to '/'
         const redirectTo = searchParams.get('redirect') || '/';
         console.log('Login successful, redirecting to:', redirectTo);
         
-        // Use replace instead of push to prevent going back to login page
-        router.replace(redirectTo);
+        // Show success message
+        toast.success('Login successful!', {
+          duration: 1000,
+          position: 'top-center'
+        });
         
-        // Fallback in case the router doesn't work
+        // Short delay to show the success message, then redirect
         setTimeout(() => {
-          if (window.location.pathname === '/login') {
-            window.location.href = redirectTo;
-          }
+          // Use window.location.href for a full page reload to ensure all auth state is properly loaded
+          window.location.href = redirectTo;
         }, 500);
-      } else {
-        throw new Error('Login failed. Please check your credentials and try again.');
       }
       
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Login failed. Please check your credentials and try again.');
+      // Get the error message from the response if available
+      const errorData = err.response ? await err.response.json() : null;
+      const errorMessage = errorData?.message || err.message || 'Login failed. Please check your credentials and try again.';
+      
+      // Log detailed error for debugging
+      console.error('Login error details:', {
+        error: err,
+        response: errorData,
+        timestamp: new Date().toISOString()
+      });
+      
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: 'top-center',
+        style: {
+          background: '#FEE2E2',
+          color: '#B91C1C',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }
+      });
     } finally {
       setIsLoading(false);
     }
@@ -68,16 +91,7 @@ export default function LoginPage() {
           <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm">{error}</span>
-            </div>
-          </div>
-        )}
+
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

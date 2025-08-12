@@ -204,6 +204,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       // For regular users, verify with the server using the login endpoint
+      console.log('Attempting login with username:', userData.username);
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -218,19 +219,58 @@ export const AuthProvider = ({ children }) => {
         })
       });
 
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data?.user) {
-          const user = result.data.user;
-          setUser(user);
-          localStorage.setItem('user', JSON.stringify(user));
-          return true;
+      const result = await response.json().catch(e => ({
+        success: false,
+        message: 'Failed to parse response from server'
+      }));
+      
+      console.log('Login response:', { status: response.status, result });
+
+      if (response.ok && result.success) {
+        // The user data is in result.user, not result.data.user
+        const userData = result.user || {};
+        console.log('Login successful for user:', { 
+          id: userData.id, 
+          username: userData.username,
+          email: userData.email 
+        });
+        
+        // Update the user state
+        setUser(userData);
+        
+        // Store user data in localStorage
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        // Store the token in localStorage if it exists in the response
+        if (result.token) {
+          localStorage.setItem('token', result.token);
         }
+        
+        return true;
       }
-      return false;
+
+      // If we get here, there was an error
+      const errorMessage = result?.message || 'Login failed. Please try again.';
+      console.error('Login error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: result,
+        timestamp: new Date().toISOString()
+      });
+      throw new Error(errorMessage);
     } catch (error) {
-      console.error('Login error:', error);
-      return false;
+      console.error('Login error in AuthContext:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        response: error.response,
+        status: error.status,
+        fullError: error
+      });
+      // Create a new error with the same message but with additional context
+      const enhancedError = new Error(error.message || 'Login failed');
+      enhancedError.originalError = error;
+      throw enhancedError;
     }
   }, []);
 
