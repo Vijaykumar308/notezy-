@@ -286,12 +286,13 @@ export async function DELETE(request) {
       );
     }
 
-    // Delete the tag
-    await tag.remove();
+    // Delete the tag using deleteOne() instead of remove()
+    await Tag.deleteOne({ _id: tag._id });
 
     return NextResponse.json({
       success: true,
-      message: 'Tag deleted successfully'
+      message: 'Tag deleted successfully',
+      data: { id: tag._id }
     });
   } catch (error) {
     console.error('Error deleting tag:', error);

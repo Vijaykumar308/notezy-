@@ -23,20 +23,31 @@ export function TagManagement() {
     "#ec4899", // pink
   ]
 
-  // Fetch tags on component mount
+  // Fetch tags when component mounts and when token changes
   useEffect(() => {
-    fetchTags()
-  }, [])
+    console.log('useEffect triggered - token:', token ? 'present' : 'missing');
+    if (token) {
+      console.log('Token available, fetching tags...');
+      fetchTags();
+    } else {
+      console.log('No token available, clearing tags');
+      setTags([]);
+    }
+  }, [token]) // Add token as a dependency
 
   const fetchTags = async () => {
+    // Double-check token is available
     if (!token) {
-      // Don't try to fetch tags if we don't have a token
+      console.log('No token available in fetchTags, aborting');
       setTags([]);
       return;
     }
 
+    console.log('Starting to fetch tags with token:', token.substring(0, 10) + '...');
+    
     try {
       setIsLoading(true);
+      
       const response = await fetch('/api/tags', {
         method: 'GET',
         headers: {
@@ -44,9 +55,13 @@ export function TagManagement() {
           'Accept': 'application/json',
           'Authorization': `Bearer ${token}`
         },
+        credentials: 'include' // Important for sending cookies if using them
       });
       
+      console.log('Tags API response status:', response.status);
+      
       if (response.status === 401) {
+        console.log('Unauthorized - redirecting to login');
         // The useAuth hook should handle the redirect
         setTags([]);
         return;
@@ -54,13 +69,20 @@ export function TagManagement() {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Error response from tags API:', errorData);
         throw new Error(errorData.message || `Failed to fetch tags (${response.status})`);
       }
       
       const data = await response.json();
+      console.log('Tags API response data:', data);
+      
       if (data.success) {
-        setTags(data.data || []);
+        // Make sure we have an array of tags
+        const tagsArray = Array.isArray(data.data) ? data.data : [];
+        console.log(`Setting ${tagsArray.length} tags`);
+        setTags(tagsArray);
       } else {
+        console.error('API returned success:false:', data.message);
         throw new Error(data.message || 'Failed to fetch tags');
       }
     } catch (error) {
@@ -203,22 +225,26 @@ export function TagManagement() {
         </div>
       </div>
 
-      <div>
+      <div className="mt-6">
         <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
           Existing Tags
         </h3>
-        {isLoading && tags.length === 0 ? (
-          <div className="text-gray-500">Loading tags...</div>
-        ) : tags.length === 0 ? (
-          <div className="text-gray-500">No tags found. Create your first tag!</div>
-        ) : (
+        
+        {isLoading ? (
+          <div className="text-gray-500 py-2">Loading tags...</div>
+        ) : tags && tags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {tags.map((tag) => (
               <div key={tag._id} className="relative group">
                 <Badge
                   variant="secondary"
                   className={`px-3 py-1 pr-6 hover:opacity-90 transition-opacity`}
-                  style={{ backgroundColor: tag.color, color: '#fff' }}
+                  style={{ 
+                    backgroundColor: tag.color || '#3b82f6', 
+                    color: '#fff',
+                    minWidth: '60px',
+                    textAlign: 'center'
+                  }}
                 >
                   {tag.name}
                 </Badge>
@@ -232,6 +258,10 @@ export function TagManagement() {
                 </button>
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="text-gray-500 py-2">
+            No tags found. Create your first tag using the input above!
           </div>
         )}
       </div>
