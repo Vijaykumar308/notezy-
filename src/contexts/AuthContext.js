@@ -14,6 +14,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -238,11 +239,12 @@ export const AuthProvider = ({ children }) => {
         // Update the user state
         setUser(userData);
         
-        // Store user data in localStorage
+        // Store user data in localStorage and state
         localStorage.setItem('user', JSON.stringify(userData));
         
-        // Store the token in localStorage if it exists in the response
+        // Store the token in both state and localStorage if it exists in the response
         if (result.token) {
+          setToken(result.token);
           localStorage.setItem('token', result.token);
         }
         
@@ -274,10 +276,19 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Get token from localStorage on initial load
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
         user,
+        token,
         isLoggedIn: !!user,
         isLoading,
         login,

@@ -1,8 +1,55 @@
 import { connectDB } from '@/lib/dbconn';
 import { NextResponse } from 'next/server';
 import Note from '@/models/noteModel';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import jwt from 'jsonwebtoken';
+
+// Connect to the database
+await connectDB();
+
+// Helper to get user ID from request
+async function getUserIdFromRequest(request) {
+  try {
+    console.log('Checking authorization header...');
+    const authHeader = request.headers.get('authorization');
+    console.log('Authorization header:', authHeader ? 'Present' : 'Missing');
+    
+    if (!authHeader) {
+      console.log('No authorization header found');
+      return null;
+    }
+
+    const token = authHeader.split(' ')[1];
+    console.log('Token extracted:', token ? 'Token present' : 'No token found');
+    
+    if (!token) {
+      console.log('No token found in authorization header');
+      return null;
+    }
+
+    console.log('JWT Secret in notes API:', process.env.JWT_SECRET ? 'Present' : 'Missing');
+    console.log('Token to verify:', token);
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('Token decoded successfully:', JSON.stringify(decoded, null, 2));
+    
+    if (!decoded.userId) {
+      console.error('No userId in decoded token');
+      return null;
+    }
+    
+    console.log('User ID from token:', decoded.userId);
+    return decoded.userId;
+  } catch (error) {
+    console.error('Error verifying token:', error.message);
+    console.error('Token verification error name:', error.name);
+    if (error.name === 'JsonWebTokenError') {
+      console.error('JWT Error:', error.message);
+    } else if (error.name === 'TokenExpiredError') {
+      console.error('Token expired at:', error.expiredAt);
+    }
+    return null;
+  }
+}
 
 // Connect to the database
 await connectDB();
@@ -19,10 +66,10 @@ const handleError = (error, status = 400) => {
 // GET /api/notes - Get all notes for the authenticated user
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
       return NextResponse.json(
-        { success: false, message: 'Not authenticated' },
+        { success: false, message: 'Please log in to view notes' },
         { status: 401 }
       );
     }
@@ -37,7 +84,7 @@ export async function GET(request) {
     const page = parseInt(searchParams.get('page') || '1');
 
     // Build query
-    const query = { createdBy: session.user.id };
+    const query = { createdBy: userId };
     
     if (tagId) {
       query.tags = tagId;
@@ -94,10 +141,10 @@ export async function GET(request) {
 // POST /api/notes - Create a new note
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
       return NextResponse.json(
-        { success: false, message: 'Not authenticated' },
+        { success: false, message: 'Please log in to create notes' },
         { status: 401 }
       );
     }
@@ -120,14 +167,13 @@ export async function POST(request) {
     }
 
     // Create the note with tags
-    const note = await Note.createWithTags({
-      title: data.title.trim(),
-      content: data.content.trim(),
-      isPublic: !!data.isPublic,
-      isPinned: !!data.isPinned,
-      color: data.color || '#ffffff',
-      tags: data.tags || []
-    }, session.user.id);
+    const note = new Note({
+      ...data,
+      createdBy: userId,
+      updatedBy: userId,
+    });
+
+    await note.save();
 
     // Populate the created note with related data
     const populatedNote = await Note.findById(note._id)
