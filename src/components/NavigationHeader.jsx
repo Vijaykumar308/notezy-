@@ -37,6 +37,9 @@ export function NavigationHeader() {
               <Link href="/" className="transition-colors hover:text-foreground/80 text-foreground">
                 Home
               </Link>
+              <Link href="/notes" className="transition-colors hover:text-foreground/80 text-foreground/60">
+                View All Notes
+              </Link>
               <Link href="/explore" className="transition-colors hover:text-foreground/80 text-foreground/60">
                 Explore
               </Link>
