@@ -168,7 +168,7 @@ export default function NotesPage() {
           </p>
         </div>
         
-        <Button onClick={() => router.push('/notes/new')} className="gap-2">
+        <Button onClick={() => router.push('/notes/create')} className="gap-2">
           <Icons.plus className="h-4 w-4" />
           New Note
         </Button>
@@ -300,7 +300,7 @@ export default function NotesPage() {
                 </p>
                 {!searchQuery && selectedTags.length === 0 && activeTab !== 'pinned' && activeTab !== 'archived' && (
                   <Button 
-                    onClick={() => router.push('/notes/new')} 
+                    onClick={() => router.push('/notes/create')} 
                     className="mt-4"
                   >
                     <Icons.plus className="h-4 w-4 mr-2" />
