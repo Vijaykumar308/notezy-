@@ -41,12 +41,19 @@ const isPublicPath = (pathname) => {
 
 // Check if user is authenticated
 const isAuthenticated = (request) => {
-  return AUTH_COOKIES.some(
+  // First check for the token in cookies
+  const hasValidCookie = AUTH_COOKIES.some(
     cookie => {
       const value = request.cookies.get(cookie)?.value;
       return value && value !== 'undefined' && value !== 'null' && value !== '';
     }
   );
+  
+  // Also check for Authorization header
+  const authHeader = request.headers.get('authorization');
+  const hasValidAuthHeader = authHeader && authHeader.startsWith('Bearer ');
+  
+  return hasValidCookie || hasValidAuthHeader;
 };
 
 export async function middleware(request) {

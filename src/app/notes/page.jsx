@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function NotesPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [notes, setNotes] = useState([]);
   const [filteredNotes, setFilteredNotes] = useState([]);
@@ -36,8 +36,13 @@ export default function NotesPage() {
       try {
         setIsLoading(true);
         
-        // Fetch notes
-        const notesResponse = await fetch('/api/notes');
+        // Fetch notes with authorization
+        const notesResponse = await fetch('/api/notes', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         const notesData = await notesResponse.json();
         
         if (!notesResponse.ok) {
@@ -46,8 +51,13 @@ export default function NotesPage() {
         
         setNotes(notesData.data || []);
         
-        // Fetch tags
-        const tagsResponse = await fetch('/api/tags');
+        // Fetch tags with authorization
+        const tagsResponse = await fetch('/api/tags', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
         const tagsData = await tagsResponse.json();
         
         if (tagsResponse.ok) {
