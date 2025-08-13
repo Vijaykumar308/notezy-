@@ -10,10 +10,10 @@ import { TagSelector } from "./TagSelector"
 import { VisibilitySelector } from "./VisibilitySelector"
 import { toast } from "react-toastify"
 
-export function NoteForm({ onSuccess }) {
+export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }) {
   const router = useRouter()
   const { token } = useAuth()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(propIsSubmitting || false)
   const [formData, setFormData] = useState({
     title: "",
     content: "",
@@ -181,23 +181,35 @@ export function NoteForm({ onSuccess }) {
           </div>
           
           <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={() => {
-                setFormData({
-                  title: "",
-                  content: "",
-                  isPublic: false,
-                  tags: [],
-                  color: "#ffffff"
-                })
-              }}
-              disabled={isSubmitting}
-              className="px-6"
-            >
-              Clear
-            </Button>
+            {onCancel ? (
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+            ) : (
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => {
+                  setFormData({
+                    title: "",
+                    content: "",
+                    isPublic: false,
+                    tags: [],
+                    color: "#ffffff"
+                  })
+                }}
+                disabled={isSubmitting}
+                className="px-6"
+              >
+                Clear
+              </Button>
+            )}
             <Button 
               type="submit"
               disabled={isSubmitting || !formData.title.trim() || !formData.content.trim()}
