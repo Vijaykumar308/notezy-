@@ -5,10 +5,16 @@ import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { TagSelector } from "./TagSelector"
 import { VisibilitySelector } from "./VisibilitySelector"
 import { toast } from "react-toastify"
+import dynamic from 'next/dynamic';
+
+// Dynamically import RichTextEditor with SSR disabled
+const RichTextEditor = dynamic(
+  () => import('./RichTextEditor'),
+  { ssr: false }
+);
 
 export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }) {
   const router = useRouter()
@@ -47,19 +53,17 @@ export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => {
-      const newData = {
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value
-      };
-      
-      // If background color changes, update font color if it was auto-set
-      if (name === 'color' && !prev.fontColor) {
-        newData.fontColor = isLightColor(value) ? '#000000' : '#ffffff';
-      }
-      
-      return newData;
-    });
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  }
+
+  const handleContentChange = (content) => {
+    setFormData(prev => ({
+      ...prev,
+      content
+    }));
   }
 
   const handleSubmit = async (e) => {
@@ -150,11 +154,10 @@ export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }
               />
             </div>
             
-            <div className="relative">
-              <Textarea
-                name="content"
-                placeholder="Write your note here..."
-                value={formData.content}
+            <div className="mt-2">
+              <RichTextEditor
+                content={formData.content}
+                onChange={handleContentChange}
                 onChange={handleInputChange}
                 className={`w-full min-h-[300px] resize-none text-base bg-transparent border-${isLightColor(formData.color) ? 'gray-200' : 'gray-600'}`}
                 style={{ color: textColor }}
