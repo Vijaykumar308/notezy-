@@ -10,11 +10,15 @@ import { VisibilitySelector } from "./VisibilitySelector"
 import { toast } from "react-toastify"
 import dynamic from 'next/dynamic';
 
-// Dynamically import RichTextEditor with SSR disabled
-const RichTextEditor = dynamic(
-  () => import('./RichTextEditor'),
-  { ssr: false }
-);
+// Import RichTextEditor with dynamic import and no SSR
+const RichTextEditor = dynamic(() => import('./RichTextEditor'), {
+  ssr: false,
+  loading: () => (
+    <div className="min-h-[200px] p-4 border border-t-0 border-gray-200 rounded-b-lg">
+      Loading editor...
+    </div>
+  )
+});
 
 export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }) {
   const router = useRouter()
@@ -155,14 +159,14 @@ export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }
             </div>
             
             <div className="mt-2">
-              <RichTextEditor
-                content={formData.content}
-                onChange={handleContentChange}
-                onChange={handleInputChange}
-                className={`w-full min-h-[300px] resize-none text-base bg-transparent border-${isLightColor(formData.color) ? 'gray-200' : 'gray-600'}`}
-                style={{ color: textColor }}
-                disabled={isSubmitting}
-              />
+              <div className="border rounded-lg overflow-hidden">
+                <RichTextEditor
+                  content={formData.content}
+                  onChange={handleContentChange}
+                  className={`w-full min-h-[300px] resize-none text-base bg-transparent`}
+                  style={{ color: textColor }}
+                />
+              </div>
             </div>
             
             <div className="space-y-4 pt-2">
