@@ -1,4 +1,5 @@
 'use client';
+// firs the notes content;
 
 import { useRef, useCallback, useEffect, useState } from 'react';
 
