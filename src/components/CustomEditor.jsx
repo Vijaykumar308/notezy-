@@ -1,17 +1,21 @@
 'use client';
-// firs the notes content;
 
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useEffect, useState, memo } from 'react';
 
-export default function CustomEditor({ content = '', onChange }) {
+const CustomEditor = memo(({ content = '', onChange }) => {
   const editorRef = useRef(null);
   const [isComposing, setIsComposing] = useState(false);
   const lastHtml = useRef('');
+  const isInitialMount = useRef(true);
 
   // Save and restore selection
   const saveSelection = useCallback(() => {
-    const selection = window.getSelection();
-    return selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    try {
+      const selection = window.getSelection();
+      return selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+    } catch (e) {
+      return null;
+    }
   }, []);
 
   const restoreSelection = useCallback((savedRange) => {
@@ -75,14 +79,27 @@ export default function CustomEditor({ content = '', onChange }) {
     }
   }, [saveSelection, restoreSelection, handleInput]);
 
-  // Set initial content - only on mount
+  // Set initial content - only on mount and when content changes from parent
   useEffect(() => {
     if (editorRef.current && content !== undefined && content !== null) {
-      editorRef.current.innerHTML = content;
-      lastHtml.current = content;
+      // Only update if content is different from current content
+      if (isInitialMount.current || content !== lastHtml.current) {
+        // Save current selection
+        const selection = saveSelection();
+        
+        // Update content
+        editorRef.current.innerHTML = content;
+        lastHtml.current = content;
+        
+        // Restore selection if this isn't the initial mount
+        if (!isInitialMount.current && selection) {
+          restoreSelection(selection);
+        }
+        
+        isInitialMount.current = false;
+      }
     }
-    // Empty dependency array means this effect runs only once on mount
-  }, []);
+  }, [content, saveSelection, restoreSelection]);
 
   // Check if current selection has a specific format
   const isFormatActive = useCallback((format) => {
@@ -110,7 +127,10 @@ export default function CustomEditor({ content = '', onChange }) {
   }, [isFormatActive]);
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden">
+    <div 
+      className="border border-gray-200 rounded-lg overflow-hidden"
+      style={{ contain: 'content' }}
+    >
       {/* Toolbar */}
       <div 
         className="bg-gray-50 p-2 border-b border-gray-200 flex flex-wrap gap-1"
@@ -191,8 +211,11 @@ export default function CustomEditor({ content = '', onChange }) {
           }
         }}
         suppressContentEditableWarning={true}
-        dangerouslySetInnerHTML={{ __html: content }}
       />
     </div>
   );
-}
+});
+
+CustomEditor.displayName = 'CustomEditor';
+
+export default CustomEditor;
