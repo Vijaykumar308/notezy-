@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { TagSelector } from "./TagSelector"
 import { VisibilitySelector } from "./VisibilitySelector"
 import { toast } from "react-toastify"
-import dynamic from 'next/dynamic';
+import dynamic from 'next/dynamic'; 
 
 // Import RichTextEditor with dynamic import and no SSR
 const RichTextEditor = dynamic(() => import('./RichTextEditor'), {
@@ -31,7 +31,8 @@ export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }
     tags: [],
     color: "#ffffff",
     fontColor: "#000000"
-  })
+  });
+  const [availableTags, setAvailableTags] = useState([]);
   
   // Function to determine if a color is light or dark
   const isLightColor = (color) => {
@@ -46,13 +47,40 @@ export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }
   // Auto-detect text color if not manually set
   const textColor = formData.fontColor || (isLightColor(formData.color) ? '#000000' : '#ffffff');
 
+  // Fetch available tags
+  useEffect(() => {
+    const fetchTags = async () => {
+      if (!token) return;
+      
+      try {
+        const response = await fetch('/api/tags', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Cache-Control': 'no-cache'
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setAvailableTags(data.data || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching tags:', error);
+      }
+    };
+    
+    fetchTags();
+  }, [token]);
+
   const handleTagToggle = (tagId) => {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.includes(tagId)
         ? prev.tags.filter(id => id !== tagId)
         : [...prev.tags, tagId]
-    }))
+    }));
   }
 
   const handleInputChange = (e) => {
@@ -170,11 +198,56 @@ export function NoteForm({ onSuccess, onCancel, isSubmitting: propIsSubmitting }
             </div>
             
             <div className="space-y-4 pt-2">
-              <TagSelector 
-                selectedTags={formData.tags}
-                onTagToggle={handleTagToggle}
-                disabled={isSubmitting}
-              />
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Available Tags</h3>
+                <TagSelector 
+                  selectedTags={formData.tags}
+                  onTagToggle={handleTagToggle}
+                  disabled={isSubmitting}
+                />
+              </div>
+              
+              {/* Selected Tags */}
+              {formData.tags.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Selected Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.tags.map(tagId => {
+                      const tag = availableTags.find(t => t._id === tagId);
+                      if (!tag) return null;
+                      return (
+                        <span
+                          key={tag._id}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: `${tag.color}40`,
+                            color: tag.color,
+                            border: `1px solid ${tag.color}`,
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => handleTagToggle(tag._id)}
+                        >
+                          {tag.name}
+                          <button 
+                            type="button"
+                            className="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-opacity-30"
+                            style={{ backgroundColor: `${tag.color}40` }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTagToggle(tag._id);
+                            }}
+                          >
+                            <span className="sr-only">Remove tag</span>
+                            <svg className="w-2 h-2" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               
               <div className="flex items-center justify-between">
                 <VisibilitySelector 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
-// Move dynamic import outside the component
+// Move dynamic import outside the component; done;
 const DynamicEditor = dynamic(() => import('./CustomEditor'), { 
   ssr: false,
   loading: () => (
