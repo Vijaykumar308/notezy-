@@ -1,10 +1,14 @@
 import { connectDB } from '@/lib/dbconn';
 import { NextResponse } from 'next/server';
 import Note from '@/models/noteModel';
+import Tag from '@/models/tagModel';
 import jwt from 'jsonwebtoken';
 
-// Connect to the database
+// Connect to the database and ensure models are registered
 await connectDB();
+
+// Ensure models are registered
+import '@/models';
 
 // Helper to get user ID from request
 async function getUserIdFromRequest(request) {

@@ -1,11 +1,15 @@
 import { connectDB } from '@/lib/dbconn';
 import { NextResponse } from 'next/server';
 import Note from '@/models/noteModel';
+import Tag from '@/models/tagModel';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
-// Connect to the database
+// Connect to the database and ensure models are registered
 await connectDB();
+
+// Ensure models are registered
+import '@/models';
 
 // Helper function to check if user is authorized to access/modify the note
 async function authorizeNoteAccess(noteId, userId) {

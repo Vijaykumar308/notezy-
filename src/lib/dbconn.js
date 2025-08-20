@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
+import '../models'; // Import models to ensure they're registered
 
-const MONGODB_URI = process.env.DB_URL || "mongodb://localhost:27017/Notezy";
+const MONGODB_URI = process.env.MONGODB_URI || process.env.DB_URL || "mongodb://localhost:27017/Notezy";
 
 if (!MONGODB_URI) {
   throw new Error(
