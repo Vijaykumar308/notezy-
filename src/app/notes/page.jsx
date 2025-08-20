@@ -149,39 +149,79 @@ export default function NotesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+        <div className="relative
+          w-16 h-16
+          rounded-full
+          bg-gradient-to-r from-primary to-purple-600
+          animate-spin
+          flex items-center justify-center
+          before:content-['']
+          before:absolute
+          before:inset-2
+          before:rounded-full
+          before:bg-background
+        ">
+          <Icons.loader2 className="h-6 w-6 text-primary animate-spin-slow" />
+        </div>
+        <p className="mt-4 text-muted-foreground">Loading your notes...</p>
       </div>
     );
   }
 
+  // Format date to relative time (e.g., "2h ago", "3d ago")
+  const formatRelativeTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+    
+    const minute = 60;
+    const hour = minute * 60;
+    const day = hour * 24;
+    const week = day * 7;
+    
+    if (diffInSeconds < minute) return 'Just now';
+    if (diffInSeconds < hour) return `${Math.floor(diffInSeconds / minute)}m ago`;
+    if (diffInSeconds < day) return `${Math.floor(diffInSeconds / hour)}h ago`;
+    if (diffInSeconds < week) return `${Math.floor(diffInSeconds / day)}d ago`;
+    
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   return (
-    <div className="container py-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">My Notes</h1>
-          <p className="text-muted-foreground">
-            {activeTab === 'all' && 'All your notes in one place'}
-            {activeTab === 'pinned' && 'Your pinned notes'}
-            {activeTab === 'archived' && 'Archived notes'}
-            {activeTab === 'public' && 'Public notes'}
-          </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="flex flex-col space-y-6 mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Your Notes
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              {activeTab === 'all' && 'All your notes in one place'}
+              {activeTab === 'pinned' && 'Your pinned notes'}
+              {activeTab === 'archived' && 'Archived notes'}
+              {activeTab === 'public' && 'Public notes from you and others'}
+            </p>
+          </div>
+          
+          <Button 
+            onClick={() => router.push('/notes/create')} 
+            className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all"
+          >
+            <Icons.plus className="h-4 w-4" />
+            New Note
+          </Button>
         </div>
         
-        <Button onClick={() => router.push('/notes/create')} className="gap-2">
-          <Icons.plus className="h-4 w-4" />
-          New Note
-        </Button>
-      </div>
-      
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row gap-4">
+        {/* Search and Filter Bar */}
+        <div className="flex flex-col space-y-3 sm:space-y-0 sm:flex-row gap-3">
           <div className="relative flex-1">
             <Icons.search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search notes..."
-              className="pl-10 w-full"
+              placeholder="Search notes, tags, or content..."
+              className="pl-10 w-full h-11 rounded-xl border-muted-foreground/20 bg-muted/50 focus-visible:ring-2 focus-visible:ring-primary/50"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -191,10 +231,10 @@ export default function NotesPage() {
             <Button
               variant="outline"
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="gap-2"
+              className="gap-2 h-11 rounded-xl border-muted-foreground/20 bg-muted/50 hover:bg-muted/80"
             >
               <Icons.filter className="h-4 w-4" />
-              Filters
+              <span className="hidden sm:inline">Filters</span>
               {selectedTags.length > 0 && (
                 <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-primary text-primary-foreground">
                   {selectedTags.length}
@@ -203,31 +243,32 @@ export default function NotesPage() {
             </Button>
             
             {isFilterOpen && (
-              <div className="absolute right-0 mt-2 w-64 p-4 bg-card border rounded-md shadow-lg z-10">
+              <div className="absolute right-0 mt-2 w-72 p-4 bg-card border border-border/50 rounded-xl shadow-2xl z-10 backdrop-blur-sm">
                 <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-medium">Filter by Tags</h3>
+                  <h3 className="font-medium text-foreground">Filter by Tags</h3>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSelectedTags([])}
                     disabled={selectedTags.length === 0}
+                    className="h-8 px-2 text-sm text-primary hover:bg-primary/10"
                   >
-                    Clear
+                    Clear all
                   </Button>
                 </div>
-                <div className="max-h-60 overflow-y-auto space-y-2">
+                <div className="max-h-60 overflow-y-auto space-y-2 custom-scrollbar">
                   {availableTags.map(tag => (
-                    <div key={tag._id} className="flex items-center">
+                    <div key={tag._id} className="flex items-center p-2 rounded-lg hover:bg-muted/50 transition-colors">
                       <input
                         type="checkbox"
                         id={`tag-${tag._id}`}
                         checked={selectedTags.includes(tag._id)}
                         onChange={() => handleTagToggle(tag._id)}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-4 w-4 rounded border-muted-foreground/30 text-primary focus:ring-2 focus:ring-primary/50"
                       />
                       <label 
                         htmlFor={`tag-${tag._id}`} 
-                        className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                        className="ml-3 text-sm font-medium text-foreground cursor-pointer select-none"
                       >
                         {tag.name}
                       </label>
@@ -239,61 +280,116 @@ export default function NotesPage() {
           </div>
         </div>
         
+        {/* Tabs */}
         <Tabs 
           value={activeTab} 
           onValueChange={setActiveTab}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pinned" className="flex items-center gap-1">
-              <Icons.pin className="h-3.5 w-3.5" />
+          <TabsList className="inline-flex h-10 items-center justify-center rounded-xl bg-muted/50 p-1 text-muted-foreground">
+            <TabsTrigger 
+              value="all" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              <Icons.layoutGrid className="h-4 w-4 mr-2" />
+              All
+            </TabsTrigger>
+            <TabsTrigger 
+              value="pinned" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              <Icons.pin className="h-3.5 w-3.5 mr-1.5" />
               Pinned
             </TabsTrigger>
-            <TabsTrigger value="archived">Archived</TabsTrigger>
-            <TabsTrigger value="public">Public</TabsTrigger>
+            <TabsTrigger 
+              value="public" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              <Icons.globe className="h-3.5 w-3.5 mr-1.5" />
+              Public
+            </TabsTrigger>
+            <TabsTrigger 
+              value="archived" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
+              <Icons.archive className="h-3.5 w-3.5 mr-1.5" />
+              Archived
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value={activeTab} className="mt-6">
+            {/* Search and filter info bar */}
             {(searchQuery || selectedTags.length > 0) && (
-              <div className="flex items-center justify-between mb-4 p-3 bg-muted/50 rounded-md">
-                <p className="text-sm text-muted-foreground">
-                  {filteredNotes.length} {filteredNotes.length === 1 ? 'note' : 'notes'} found
-                  {searchQuery && ` for "${searchQuery}"`}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 p-4 bg-muted/30 rounded-xl border border-border/50">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-foreground/80">
+                    {filteredNotes.length} {filteredNotes.length === 1 ? 'note' : 'notes'} found
+                    {searchQuery && (
+                      <span className="ml-1.5">
+                        matching "<span className="font-semibold text-foreground">{searchQuery}</span>"
+                      </span>
+                    )}
+                  </p>
+                  
                   {selectedTags.length > 0 && (
-                    <>
-                      {' with tags: '}
-                      {selectedTags.map((tagId, index) => {
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1 sm:mt-0">
+                      <span className="text-sm text-muted-foreground">with tags:</span>
+                      {selectedTags.map((tagId) => {
                         const tag = availableTags.find(t => t._id === tagId);
                         return (
-                          <span key={tagId} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary mx-1">
+                          <span 
+                            key={tagId}
+                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                          >
                             {tag?.name || tagId}
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTagToggle(tagId);
+                              }}
+                              className="ml-1.5 -mr-1 p-0.5 rounded-full hover:bg-primary/20"
+                            >
+                              <Icons.x className="h-3 w-3" />
+                            </button>
                           </span>
                         );
                       })}
-                    </>
+                    </div>
                   )}
-                </p>
+                </div>
+                
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleClearFilters}
-                  className="h-8 px-2"
+                  className="mt-2 sm:mt-0 h-8 px-3 text-sm text-muted-foreground hover:text-foreground"
                 >
-                  Clear filters
+                  <Icons.x className="h-3.5 w-3.5 mr-1.5" />
+                  Clear all
                 </Button>
               </div>
             )}
             
+            {/* Empty state */}
             {filteredNotes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Icons.note className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">No notes found</h3>
-                <p className="text-muted-foreground mt-2">
+              <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl bg-muted/30 border border-dashed border-border">
+                <div className="p-3.5 mb-4 rounded-full bg-primary/10">
+                  <Icons.note className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-1.5">
+                  {searchQuery || selectedTags.length > 0
+                    ? 'No matching notes found'
+                    : activeTab === 'pinned'
+                    ? 'No pinned notes'
+                    : activeTab === 'archived'
+                    ? 'No archived notes'
+                    : 'No notes yet'}
+                </h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
                   {searchQuery || selectedTags.length > 0
                     ? 'Try adjusting your search or filter criteria.'
                     : activeTab === 'pinned'
-                    ? 'You have no pinned notes yet.'
+                    ? 'Pin important notes to find them here later.'
                     : activeTab === 'archived'
                     ? 'Your archived notes will appear here.'
                     : 'Create your first note to get started.'}
@@ -301,66 +397,121 @@ export default function NotesPage() {
                 {!searchQuery && selectedTags.length === 0 && activeTab !== 'pinned' && activeTab !== 'archived' && (
                   <Button 
                     onClick={() => router.push('/notes/create')} 
-                    className="mt-4"
+                    className="mt-6 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all"
                   >
                     <Icons.plus className="h-4 w-4 mr-2" />
-                    Create Note
+                    Create your first note
                   </Button>
                 )}
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filteredNotes.map((note) => (
-                  <div
-                    key={note._id}
-                    className="relative group border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => router.push(`/notes/${note._id}`)}
-                    style={{
-                      backgroundColor: note.color || 'white',
-                      borderColor: note.color ? `${note.color}40` : 'hsl(var(--border))',
-                    }}
-                  >
-                    {note.isPinned && (
-                      <Icons.pin className="absolute top-2 right-2 h-4 w-4 text-muted-foreground" />
-                    )}
-                    
-                    <h3 className="font-medium line-clamp-1 mb-1">
-                      {note.title || 'Untitled Note'}
-                    </h3>
-                    
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {note.content.replace(/[#*_`~>\[\]]/g, '')}
-                    </p>
-                    
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {note.tags?.slice(0, 3).map((tag) => (
-                        <span
-                          key={typeof tag === 'string' ? tag : tag._id}
-                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
-                        >
-                          {typeof tag === 'string' ? tag : tag.name}
-                        </span>
-                      ))}
-                      {note.tags?.length > 3 && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                          +{note.tags.length - 3}
-                        </span>
+              /* Notes Grid */
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredNotes.map((note) => {
+                  // Extract text content from markdown
+                  const textContent = note.content
+                    .replace(/[#*_`~>\[\]]/g, '')
+                    .replace(/\n/g, ' ')
+                    .trim();
+                  
+                  // Get first 2-3 lines of content
+                  const previewText = textContent.length > 120 
+                    ? textContent.substring(0, 120) + '...' 
+                    : textContent;
+                  
+                  return (
+                    <div
+                      key={note._id}
+                      className="group relative flex flex-col h-full rounded-2xl border border-border/50 bg-card overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
+                      onClick={() => router.push(`/notes/${note._id}`)}
+                      style={{
+                        '--note-color': note.color || 'hsl(var(--card))',
+                        backgroundColor: note.color ? `${note.color}15` : 'hsl(var(--card))',
+                        borderColor: note.color ? `${note.color}30` : 'hsl(var(--border))',
+                      }}
+                    >
+                      {/* Note header */}
+                      <div className="p-5 pb-0">
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="text-lg font-semibold text-foreground line-clamp-2 leading-snug">
+                            {note.title || 'Untitled Note'}
+                          </h3>
+                          
+                          <div className="flex items-center space-x-1.5">
+                            {note.isPinned && (
+                              <span className="p-1.5 rounded-full bg-primary/10 text-primary">
+                                <Icons.pin className="h-3.5 w-3.5" />
+                              </span>
+                            )}
+                            <button 
+                              className="p-1.5 rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted/50 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // TODO: Add note actions (pin, archive, etc.)
+                              }}
+                            >
+                              <Icons.moreVertical className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Note content preview */}
+                        {textContent && (
+                          <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                            {previewText}
+                          </p>
+                        )}
+                      </div>
+                      
+                      {/* Tags */}
+                      {note.tags?.length > 0 && (
+                        <div className="px-5 pb-3 -mt-1 flex flex-wrap gap-1.5">
+                          {note.tags.slice(0, 3).map((tag) => (
+                            <span
+                              key={typeof tag === 'string' ? tag : tag._id}
+                              className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground border border-border/30"
+                            >
+                              {typeof tag === 'string' ? tag : tag.name}
+                            </span>
+                          ))}
+                          {note.tags.length > 3 && (
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted/50 text-muted-foreground border border-border/30">
+                              +{note.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
                       )}
+                      
+                      {/* Footer */}
+                      <div className="mt-auto px-5 py-3 border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
+                        <div className="flex items-center">
+                          <span className="flex items-center">
+                            {formatRelativeTime(note.updatedAt || note.createdAt)}
+                          </span>
+                          
+                          {note.isPublic && (
+                            <span className="flex items-center ml-3">
+                              <Icons.globe className="h-3 w-3 mr-1" />
+                              <span className="hidden sm:inline">Public</span>
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex -space-x-1.5">
+                          {/* Placeholder for collaborator avatars */}
+                          {note.isPublic && (
+                            <div className="h-5 w-5 rounded-full bg-primary/10 border-2 border-background flex items-center justify-center">
+                              <Icons.users className="h-2.5 w-2.5 text-primary" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                     </div>
-                    
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-2">
-                      <span>{formatDate(note.updatedAt || note.createdAt)}</span>
-                      {note.isPublic && (
-                        <span className="flex items-center">
-                          <Icons.eye className="h-3 w-3 mr-1" />
-                          Public
-                        </span>
-                      )}
-                    </div>
-                    
-                    <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 rounded-lg transition-opacity" />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </TabsContent>
